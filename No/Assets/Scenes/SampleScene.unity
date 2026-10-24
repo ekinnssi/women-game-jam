@@ -558,7 +558,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 243d629764e573a4999f8d7a68988103, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InspectPanel
-  contentHolder: {fileID: 1461413244}
+  contentHolder: {fileID: 0}
   dialogueText: {fileID: 2108439128}
   nextButton: {fileID: 1115052975}
   closeButton: {fileID: 883521500}
