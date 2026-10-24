@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
+using System.Collections.Generic;
 using DG.Tweening;
 
 public class SimpleTriggerInteract : MonoBehaviour
@@ -21,8 +23,8 @@ public class SimpleTriggerInteract : MonoBehaviour
     [Header("Diyalog Ayarlari")]
     [SerializeField] private GameObject ePromptUI;
     [SerializeField] private PanelManager.PanelType panelType = PanelManager.PanelType.None;
-    [TextArea(2, 4)]
-    [SerializeField] private string[] dialogue;
+    [FormerlySerializedAs("dialogueSteps")]
+    [SerializeField] private List<DialogueStep> dialogue = new List<DialogueStep>();
 
     [Header("DOTween Efektleri")]
     [SerializeField] private float hoverScaleFactor = 1.07f;
@@ -84,7 +86,8 @@ public class SimpleTriggerInteract : MonoBehaviour
     private void DetectRoomIndex()
     {
         // kapi tipi
-        if (interactType == InteractType.InspectDialogue && panelType == PanelManager.PanelType.None && (dialogue == null || dialogue.Length == 0))
+        bool hasDialogue = dialogue != null && dialogue.Count > 0;
+        if (interactType == InteractType.InspectDialogue && panelType == PanelManager.PanelType.None && !hasDialogue)
         {
             interactType = InteractType.RoomTransition;
         }

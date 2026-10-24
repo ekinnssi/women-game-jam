@@ -6,6 +6,23 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using TMPro;
 
+[System.Serializable]
+public class ObjectToggle
+{
+    public GameObject target;
+    public bool setActive = true;
+}
+
+[System.Serializable]
+public class DialogueStep
+{
+    [TextArea(2, 4)]
+    public string text;
+
+    [Header("Acilacak / Kapanacak Objeler")]
+    public List<ObjectToggle> objectToggles = new List<ObjectToggle>();
+}
+
 public class PanelManager : MonoBehaviour
 {
     public static PanelManager Instance;
@@ -55,9 +72,10 @@ public class PanelManager : MonoBehaviour
     [SerializeField] private float bounceSpeed = 7f;
     [SerializeField] private float bounceAmount = 4f;
 
-    private string[] dialogueLines;
+    private List<DialogueStep> dialogueSteps = new List<DialogueStep>();
     private int currentLineIndex = 0;
     private Action onCompleteCallback;
+    private PanelType currentPanelType = PanelType.None;
 
     private bool isPanelOpen = false;
     private bool isTyping = false;
@@ -118,13 +136,15 @@ public class PanelManager : MonoBehaviour
         if (phonePanel != null) phonePanel.SetActive(false);
         if (sleepCanvas != null) sleepCanvas.SetActive(false);
         if (dialogueBox != null) dialogueBox.SetActive(false);
+        currentPanelType = PanelType.None;
         isPanelOpen = false;
     }
 
     // panel ac
-    public void OpenInspect(PanelType panelType, string[] lines, Action onComplete = null)
+    public void OpenInspect(PanelType panelType, List<DialogueStep> steps, Action onComplete = null)
     {
         HideAllPanels();
+        currentPanelType = panelType;
 
         switch (panelType)
         {
@@ -139,15 +159,8 @@ public class PanelManager : MonoBehaviour
                 break;
         }
 
-        if (dialogueBox != null) dialogueBox.SetActive(true);
-        if (continueHintText != null)
-        {
-            continueHintText.text = hintMessage;
-            continueHintText.gameObject.SetActive(true);
-        }
-
         Time.timeScale = 0f;
-        dialogueLines = lines;
+        dialogueSteps = steps ?? new List<DialogueStep>();
         onCompleteCallback = onComplete;
         currentLineIndex = 0;
         isPanelOpen = true;
@@ -156,38 +169,98 @@ public class PanelManager : MonoBehaviour
         ShowCurrentLine();
     }
 
+    // string overload
+    public void OpenInspect(PanelType panelType, string[] lines, Action onComplete = null)
+    {
+        List<DialogueStep> steps = new List<DialogueStep>();
+        if (lines != null)
+        {
+            for (int i = 0; i < lines.Length; i++)
+            {
+                steps.Add(new DialogueStep { text = lines[i] });
+            }
+        }
+        OpenInspect(panelType, steps, onComplete);
+    }
+
     // satir goster
     private void ShowCurrentLine()
     {
-        if (dialogueLines == null || dialogueLines.Length == 0 || currentLineIndex >= dialogueLines.Length)
-        {
-            CloseCurrentPanel();
-            return;
-        }
-
         if (typingCoroutine != null)
         {
             StopCoroutine(typingCoroutine);
             typingCoroutine = null;
         }
 
-        string rawLine = dialogueLines[currentLineIndex];
-        var parsed = ParseTextEffects(rawLine);
-        charEffects = parsed.effects;
-
-        if (dialogueText != null)
+        // adim dongusu
+        while (dialogueSteps != null && currentLineIndex < dialogueSteps.Count)
         {
-            dialogueText.alignment = TextAlignmentOptions.Center;
-            dialogueText.textWrappingMode = TextWrappingModes.Normal;
-            dialogueText.overflowMode = TextOverflowModes.Overflow;
-            dialogueText.text = parsed.cleanText;
+            DialogueStep step = dialogueSteps[currentLineIndex];
 
-            // sifirla
-            dialogueText.maxVisibleCharacters = 0;
-            dialogueText.ForceMeshUpdate();
+            // obje durumlari
+            ApplyObjectToggles(step);
+
+            string rawLine = (step != null && step.text != null) ? step.text : "";
+            var parsed = ParseTextEffects(rawLine);
+
+            // metin kontrolu
+            if (!string.IsNullOrWhiteSpace(parsed.cleanText))
+            {
+                if (dialogueBox != null) dialogueBox.SetActive(true);
+                if (continueHintText != null)
+                {
+                    continueHintText.text = hintMessage;
+                    continueHintText.gameObject.SetActive(true);
+                }
+
+                charEffects = parsed.effects;
+
+                if (dialogueText != null)
+                {
+                    dialogueText.alignment = TextAlignmentOptions.Center;
+                    dialogueText.textWrappingMode = TextWrappingModes.Normal;
+                    dialogueText.overflowMode = TextOverflowModes.Overflow;
+                    dialogueText.text = parsed.cleanText;
+
+                    // sifirla
+                    dialogueText.maxVisibleCharacters = 0;
+                    dialogueText.ForceMeshUpdate();
+                }
+
+                typingCoroutine = StartCoroutine(TypewriterRoutine());
+                return;
+            }
+
+            // bos satir
+            if (dialogueBox != null) dialogueBox.SetActive(false);
+            currentLineIndex++;
         }
 
-        typingCoroutine = StartCoroutine(TypewriterRoutine());
+        // panel kontrolu
+        if (currentPanelType != PanelType.None)
+        {
+            if (dialogueBox != null) dialogueBox.SetActive(false);
+            isTyping = false;
+        }
+        else
+        {
+            CloseCurrentPanel();
+        }
+    }
+
+    // obje kontrolu
+    private void ApplyObjectToggles(DialogueStep step)
+    {
+        if (step == null || step.objectToggles == null || step.objectToggles.Count == 0) return;
+
+        for (int i = 0; i < step.objectToggles.Count; i++)
+        {
+            var toggle = step.objectToggles[i];
+            if (toggle != null && toggle.target != null)
+            {
+                toggle.target.SetActive(toggle.setActive);
+            }
+        }
     }
 
     // daktilo rutini
@@ -244,7 +317,7 @@ public class PanelManager : MonoBehaviour
     public void NextLine()
     {
         currentLineIndex++;
-        if (dialogueLines != null && currentLineIndex < dialogueLines.Length)
+        if (dialogueSteps != null && currentLineIndex < dialogueSteps.Count)
         {
             ShowCurrentLine();
         }
