@@ -304,10 +304,10 @@ public class SimpleTriggerInteract : MonoBehaviour
             return;
         }
 
-        // diyalog paneli
-        if (PanelManager.Instance != null)
+      // diyalog paneli
+        if (GameFlowManager.Instance != null)
         {
-            PanelManager.Instance.OpenInspect(panelType, dialogue, OnDialogueFinished);
+            GameFlowManager.Instance.StartCurrentStateInteraction(panelType);
         }
     }
 
