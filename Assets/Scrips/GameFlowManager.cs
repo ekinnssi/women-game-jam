@@ -224,13 +224,13 @@ public class GameFlowManager : MonoBehaviour
                 });
                 break;
 
-           // 1. GUN UYKUSU -> Uyanınca Güzel Olacak ve 2. gün öyle kalacak
+            // 1. UYKU: Uyanınca (onWakeUp) Güzel Oluyoruz
             case StoryState.Day1_Bed:
                 PanelManager.Instance.ShowSleepScreen(
                     onMidSleep: () =>
                     {
                         currentState = StoryState.Day2_Mirror;
-                        if (CameraController.Instance != null) CameraController.Instance.GoToRoom(1);
+                        if (CameraController.Instance != null) { CameraController.Instance.GoToRoom(1); }
                     },
                     onWakeUp: () =>
                     {
@@ -259,13 +259,13 @@ public class GameFlowManager : MonoBehaviour
                 });
                 break;
 
-           // 2. GUN UYKUSU -> 3. Güne Güzel Başlayacak ve telefon/flaş anına kadar güzel kalacak
+            // 2. UYKU: Uyanınca Güzel kalmaya devam ediyoruz
             case StoryState.Day2_Bed:
                 PanelManager.Instance.ShowSleepScreen(
                     onMidSleep: () =>
                     {
                         currentState = StoryState.Day3_MirrorMorning;
-                        if (CameraController.Instance != null) CameraController.Instance.GoToRoom(1);
+                        if (CameraController.Instance != null) { CameraController.Instance.GoToRoom(1); }
                     },
                     onWakeUp: () =>
                     {
@@ -276,6 +276,7 @@ public class GameFlowManager : MonoBehaviour
                         });
                     });
                 break;
+
             case StoryState.Day3_MirrorMorning:
                 currentState = StoryState.Day3_Phone;
                 PlaySound(phoneNotifyClip);
@@ -314,13 +315,13 @@ public class GameFlowManager : MonoBehaviour
                 });
                 break;
 
-           // 3. GUN UYKUSU (HAYIR DEDIKTEN SONRA) -> Sadece uyanınca Normal/Mutlu Hale Dönecek
+            // 3. UYKU (Hayır dedikten sonra): Uyanınca (onWakeUp) Normal/Mutlu Hale Dönüyoruz
             case StoryState.Day3_Bed:
                 PanelManager.Instance.ShowSleepScreen(
                     onMidSleep: () =>
                     {
                         currentState = StoryState.Day4_Phone;
-                        if (CameraController.Instance != null) CameraController.Instance.GoToRoom(1);
+                        if (CameraController.Instance != null) { CameraController.Instance.GoToRoom(1); }
                     },
                     onWakeUp: () =>
                     {
