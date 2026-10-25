@@ -197,22 +197,33 @@ public class SimpleTriggerInteract : MonoBehaviour
         if (cam == null)
             cam = FindFirstObjectByType<Camera>();
 
-        // mouse kontrolu
+       // mouse kontrolu
         bool mouseOver = false;
         if (canInteract && cam != null && Mouse.current != null)
         {
             Vector2 mouseScreen = Mouse.current.position.ReadValue();
-            float dist = Mathf.Abs(cam.transform.position.z - targetTransform.position.z);
-            Vector3 world3D = cam.ScreenToWorldPoint(new Vector3(mouseScreen.x, mouseScreen.y, dist));
-            Vector2 mouseWorld = new Vector2(world3D.x, world3D.y);
 
-            if (hoverCollider != null && hoverCollider.OverlapPoint(mouseWorld))
+            // NaN veya sonsuzluk kontrolü: koordinatlar geçerli ve ekran sınırları içindeyse çalıştır
+            if (!float.IsNaN(mouseScreen.x) && !float.IsNaN(mouseScreen.y) &&
+                !float.IsInfinity(mouseScreen.x) && !float.IsInfinity(mouseScreen.y))
             {
-                mouseOver = true;
-            }
-            else if (targetRenderer != null && targetRenderer.bounds.Contains(world3D))
-            {
-                mouseOver = true;
+                float targetZ = targetTransform != null ? targetTransform.position.z : 0f;
+                float dist = Mathf.Abs(cam.transform.position.z - targetZ);
+
+                // dist 0 veya geçersizse kameranın varsayılan nearClipPlane değerini baz al
+                if (dist <= 0f || float.IsNaN(dist)) dist = 10f;
+
+                Vector3 world3D = cam.ScreenToWorldPoint(new Vector3(mouseScreen.x, mouseScreen.y, dist));
+                Vector2 mouseWorld = new Vector2(world3D.x, world3D.y);
+
+                if (hoverCollider != null && hoverCollider.OverlapPoint(mouseWorld))
+                {
+                    mouseOver = true;
+                }
+                else if (targetRenderer != null && targetRenderer.bounds.Contains(world3D))
+                {
+                    mouseOver = true;
+                }
             }
         }
 
