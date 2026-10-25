@@ -224,17 +224,17 @@ public class GameFlowManager : MonoBehaviour
                 });
                 break;
 
+           // 1. GUN UYKUSU -> Uyanınca Güzel Olacak ve 2. gün öyle kalacak
             case StoryState.Day1_Bed:
                 PanelManager.Instance.ShowSleepScreen(
                     onMidSleep: () =>
                     {
                         currentState = StoryState.Day2_Mirror;
-                        // BURADA GUZEL HALINE GELIYOR (1. uyku sonrasi)
-                        ApplyVisuals(isPretty: true, mirrorState: 1, stalkerWindow: false);
                         if (CameraController.Instance != null) CameraController.Instance.GoToRoom(1);
                     },
                     onWakeUp: () =>
                     {
+                        ApplyVisuals(isPretty: true, mirrorState: 1, stalkerWindow: false);
                         PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
                         {
                             "Ugh, what a strange night... Let me wash my face."
@@ -259,23 +259,23 @@ public class GameFlowManager : MonoBehaviour
                 });
                 break;
 
+           // 2. GUN UYKUSU -> 3. Güne Güzel Başlayacak ve telefon/flaş anına kadar güzel kalacak
             case StoryState.Day2_Bed:
                 PanelManager.Instance.ShowSleepScreen(
                     onMidSleep: () =>
                     {
                         currentState = StoryState.Day3_MirrorMorning;
-                        ApplyVisuals(isPretty: true, mirrorState: 1, stalkerWindow: false);
                         if (CameraController.Instance != null) CameraController.Instance.GoToRoom(1);
                     },
                     onWakeUp: () =>
                     {
+                        ApplyVisuals(isPretty: true, mirrorState: 1, stalkerWindow: false);
                         PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
                         {
                             "Ah, another morning. Let's look at the mirror."
                         });
                     });
                 break;
-
             case StoryState.Day3_MirrorMorning:
                 currentState = StoryState.Day3_Phone;
                 PlaySound(phoneNotifyClip);
@@ -314,17 +314,17 @@ public class GameFlowManager : MonoBehaviour
                 });
                 break;
 
+           // 3. GUN UYKUSU (HAYIR DEDIKTEN SONRA) -> Sadece uyanınca Normal/Mutlu Hale Dönecek
             case StoryState.Day3_Bed:
                 PanelManager.Instance.ShowSleepScreen(
                     onMidSleep: () =>
                     {
                         currentState = StoryState.Day4_Phone;
-                        // 3. gunun sonunda hayir deyince 4. gune normale donuyor (mirrorState: 2 -> normal mutlu sprite)
-                        ApplyVisuals(isPretty: false, mirrorState: 2, stalkerWindow: false);
                         if (CameraController.Instance != null) CameraController.Instance.GoToRoom(1);
                     },
                     onWakeUp: () =>
                     {
+                        ApplyVisuals(isPretty: false, mirrorState: 2, stalkerWindow: false);
                         PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
                         {
                             "It's so quiet today..."
