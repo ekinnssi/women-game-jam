@@ -9,7 +9,7 @@ public class CameraController : MonoBehaviour
     public float[] odaXPozisyonlari = { 0f, 25f, 50f };
     [SerializeField] private float gecisSuresi = 0.5f;
     [SerializeField] private Ease gecisEgrisi = Ease.OutCubic;
-    private int mevcutOda = 0;
+    private int mevcutOda = 1; // 1 = Yatak Odası
     private Tween cameraTween;
 
     public int MevcutOda => mevcutOda;
@@ -19,17 +19,21 @@ public class CameraController : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        // Kamerayı başlangıçta doğrudan Yatak Odasına (X: 25) oturt
+        if (odaXPozisyonlari != null && odaXPozisyonlari.Length > 1)
+        {
+            mevcutOda = 1;
+            Vector3 pos = transform.position;
+            pos.x = odaXPozisyonlari[mevcutOda];
+            transform.position = pos;
+        }
     }
 
     private void Update()
     {
-        // zaman kontrolu
         if (Time.timeScale == 0f) return;
-
-        // diyalog kontrolu
         if (PanelManager.Instance != null && PanelManager.Instance.IsPanelOpen) return;
 
-        // tus kontrolu
         if (Keyboard.current != null)
         {
             if (Keyboard.current.dKey.wasPressedThisFrame)
@@ -39,7 +43,6 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    // sonraki oda
     public void NextRoom()
     {
         if (mevcutOda < odaXPozisyonlari.Length - 1)
@@ -48,7 +51,6 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    // onceki oda
     public void PrevRoom()
     {
         if (mevcutOda > 0)
@@ -57,7 +59,6 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    // odaya git
     public void GoToRoom(int targetRoom)
     {
         if (targetRoom < 0 || targetRoom >= odaXPozisyonlari.Length) return;
