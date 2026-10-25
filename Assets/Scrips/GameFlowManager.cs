@@ -8,53 +8,34 @@ public class GameFlowManager : MonoBehaviour
 
     public enum StoryState
     {
-        // GUN 1
-        Day1_Mirror,
-        Day1_Door,
-        Day1_Bed,
-
-        // GUN 2
-        Day2_Mirror,
-        Day2_Door,
-        Day2_Bed,
-
-        // GUN 3
-        Day3_MirrorMorning,
-        Day3_Phone,
-        Day3_MirrorPanic,
-        Day3_Door,
-        Day3_Bed,
-
-        // GUN 4
-        Day4_Phone,
-        Day4_MirrorHappy,
-        GameEnded
+        Day1_Mirror, Day1_Door, Day1_Bed,
+        Day2_Mirror, Day2_Door, Day2_Bed,
+        Day3_MirrorMorning, Day3_Phone, Day3_MirrorPanic, Day3_Door, Day3_Bed,
+        Day4_Phone, Day4_MirrorHappy, GameEnded
     }
 
     public StoryState currentState = StoryState.Day1_Mirror;
 
-    [Header("Tetikleyiciler (Sahneden Surukle)")]
+    [Header("Tetikleyiciler")]
     [SerializeField] private SimpleTriggerInteract mirrorTrigger;
     [SerializeField] private SimpleTriggerInteract doorTrigger;
     [SerializeField] private SimpleTriggerInteract bedTrigger;
     [SerializeField] private SimpleTriggerInteract phoneTrigger;
 
-    [Header("Kose Karakter Portresi (Normal / Guzel)")]
+    [Header("Gorseller")]
     [SerializeField] private Image cornerPortraitImage;
     [SerializeField] private Sprite normalPortraitSprite;
     [SerializeField] private Sprite prettyPortraitSprite;
 
-    [Header("Ayna Paneli Icindeki Kiz Gorseli")]
     [SerializeField] private Image mirrorCharacterImage;
     [SerializeField] private Sprite mirrorUglySprite;
     [SerializeField] private Sprite mirrorPrettySprite;
     [SerializeField] private Sprite mirrorNormalHappySprite;
 
-    [Header("Yatak Odasi Pencere / Cam Gorseli (3. Gun)")]
     [SerializeField] private SpriteRenderer windowRenderer;
     [SerializeField] private Sprite normalWindowSprite;
     [SerializeField] private Sprite stalkerWindowSprite;
-    [SerializeField] private GameObject stalkerWindowObject; // Eger ayri bir obje ise
+    [SerializeField] private GameObject stalkerWindowObject;
 
     [Header("Sesler")]
     [SerializeField] private AudioSource audioSource;
@@ -62,13 +43,10 @@ public class GameFlowManager : MonoBehaviour
     [SerializeField] private AudioClip phoneNotifyClip;
     [SerializeField] private AudioClip cameraFlashNoiseClip;
 
-    [Header("Bitis Sahnesi Adi (Varsa)")]
-    [SerializeField] private string endSceneName = "";
+    [Header("Bitis Sahnesi Adi")]
+    [SerializeField] private string endSceneName = "EndScene";
 
-    private void Awake()
-    {
-        Instance = this;
-    }
+    private void Awake() { Instance = this; }
 
     private void Start()
     {
@@ -88,9 +66,7 @@ public class GameFlowManager : MonoBehaviour
     private void ApplyVisuals(bool isPretty, int mirrorState, bool stalkerWindow)
     {
         if (cornerPortraitImage != null)
-        {
             cornerPortraitImage.sprite = isPretty ? prettyPortraitSprite : normalPortraitSprite;
-        }
 
         if (mirrorCharacterImage != null)
         {
@@ -100,60 +76,42 @@ public class GameFlowManager : MonoBehaviour
         }
 
         if (windowRenderer != null)
-        {
             windowRenderer.sprite = stalkerWindow ? stalkerWindowSprite : normalWindowSprite;
-        }
         if (stalkerWindowObject != null)
-        {
             stalkerWindowObject.SetActive(stalkerWindow);
-        }
     }
 
     private void PlaySound(AudioClip clip)
     {
-        if (audioSource != null && clip != null)
-            audioSource.PlayOneShot(clip);
+        if (audioSource != null && clip != null) audioSource.PlayOneShot(clip);
     }
 
-    // Hangi esya ile etkilesime girilebilir?
     public bool CanInteract(PanelManager.PanelType type)
     {
         switch (type)
         {
             case PanelManager.PanelType.Mirror:
-                return currentState == StoryState.Day1_Mirror ||
-                       currentState == StoryState.Day2_Mirror ||
-                       currentState == StoryState.Day3_MirrorMorning ||
-                       currentState == StoryState.Day3_MirrorPanic ||
+                return currentState == StoryState.Day1_Mirror || currentState == StoryState.Day2_Mirror ||
+                       currentState == StoryState.Day3_MirrorMorning || currentState == StoryState.Day3_MirrorPanic ||
                        currentState == StoryState.Day4_MirrorHappy;
-
             case PanelManager.PanelType.Door:
-                return currentState == StoryState.Day1_Door ||
-                       currentState == StoryState.Day2_Door ||
+                return currentState == StoryState.Day1_Door || currentState == StoryState.Day2_Door ||
                        currentState == StoryState.Day3_Door;
-
             case PanelManager.PanelType.Phone:
-                return currentState == StoryState.Day3_Phone ||
-                       currentState == StoryState.Day4_Phone;
-
+                return currentState == StoryState.Day3_Phone || currentState == StoryState.Day4_Phone;
             case PanelManager.PanelType.Bed:
-                return currentState == StoryState.Day1_Bed ||
-                       currentState == StoryState.Day2_Bed ||
+                return currentState == StoryState.Day1_Bed || currentState == StoryState.Day2_Bed ||
                        currentState == StoryState.Day3_Bed;
-
-            default:
-                return false;
+            default: return false;
         }
     }
 
-    // Etkilesime basildiginda dogru gune ait diyalogu acar
     public void StartCurrentStateInteraction(PanelManager.PanelType type)
     {
         if (PanelManager.Instance == null) return;
 
         switch (currentState)
         {
-            // ================= 1. GUN =================
             case StoryState.Day1_Mirror:
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.Mirror, new string[]
                 {
@@ -170,11 +128,8 @@ public class GameFlowManager : MonoBehaviour
                 }, AdvanceStory, PanelManager.ChoiceMode.YesOnly_QuestionLocked, "Hehehe... Just wait and see tomorrow.");
                 break;
 
-            case StoryState.Day1_Bed:
-                AdvanceStory();
-                break;
+            case StoryState.Day1_Bed: AdvanceStory(); break;
 
-            // ================= 2. GUN =================
             case StoryState.Day2_Mirror:
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.Mirror, new string[]
                 {
@@ -191,11 +146,8 @@ public class GameFlowManager : MonoBehaviour
                 }, AdvanceStory, PanelManager.ChoiceMode.YesOnly_QuestionLocked, "Wonderful... Everyone will know your name.");
                 break;
 
-            case StoryState.Day2_Bed:
-                AdvanceStory();
-                break;
+            case StoryState.Day2_Bed: AdvanceStory(); break;
 
-            // ================= 3. GUN =================
             case StoryState.Day3_MirrorMorning:
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.Mirror, new string[]
                 {
@@ -207,8 +159,8 @@ public class GameFlowManager : MonoBehaviour
             case StoryState.Day3_Phone:
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.Phone, new string[]
                 {
-                    "Hundreds of messages... 'I'm watching you', 'I know where you live'...",
-                    "[tremble]What is this?! They are all creeps and stalkers! I'm scared...[/tremble]"
+                    "Hundreds of messages... 'I'm watching you'...",
+                    "[tremble]What is this?! They are all creeps! I'm scared...[/tremble]"
                 }, AdvanceStory);
                 break;
 
@@ -228,16 +180,13 @@ public class GameFlowManager : MonoBehaviour
                 }, AdvanceStory, PanelManager.ChoiceMode.NoOnly_YesLocked, "...Fine. Suit yourself.");
                 break;
 
-            case StoryState.Day3_Bed:
-                AdvanceStory();
-                break;
+            case StoryState.Day3_Bed: AdvanceStory(); break;
 
-            // ================= 4. GUN =================
             case StoryState.Day4_Phone:
-                PanelManager.Instance.OpenInspect(PanelManager.PanelType.Phone, new string[]
+                PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
                 {
-                    "All my followers... they are gone?!",
-                    "The stalkers, the creepy messages... Everything disappeared!"
+                    "Let me check my phone...",
+                    "Wait... my followers are all gone! The stalkers... they aren't here today!"
                 }, AdvanceStory);
                 break;
 
@@ -245,7 +194,7 @@ public class GameFlowManager : MonoBehaviour
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.Mirror, new string[]
                 {
                     "[bounce]I'm back to my old self![/bounce]",
-                    "I missed my real face so much... I finally feel free and happy."
+                    "I missed my real face so much... I'm finally happy."
                 }, AdvanceStory);
                 break;
         }
@@ -257,14 +206,13 @@ public class GameFlowManager : MonoBehaviour
 
         switch (currentState)
         {
-            // --- GUN 1 AKISI ---
             case StoryState.Day1_Mirror:
                 currentState = StoryState.Day1_Door;
                 PlaySound(doorKnockClip);
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
                 {
                     "[shake]*KNOCK KNOCK KNOCK*[/shake]",
-                    "Who could that be? Nobody ever visits me... I should check the front door."
+                    "Who could that be? Nobody ever visits me..."
                 });
                 break;
 
@@ -272,7 +220,7 @@ public class GameFlowManager : MonoBehaviour
                 currentState = StoryState.Day1_Bed;
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
                 {
-                    "What was that thing...? Anyway, I'm exhausted. I should go to bed."
+                    "What was that...? Anyway, I'm exhausted. I should go to bed."
                 });
                 break;
 
@@ -281,6 +229,7 @@ public class GameFlowManager : MonoBehaviour
                     onMidSleep: () =>
                     {
                         currentState = StoryState.Day2_Mirror;
+                        // BURADA GUZEL HALINE GELIYOR (1. uyku sonrasi)
                         ApplyVisuals(isPretty: true, mirrorState: 1, stalkerWindow: false);
                         if (CameraController.Instance != null) CameraController.Instance.GoToRoom(1);
                     },
@@ -288,12 +237,11 @@ public class GameFlowManager : MonoBehaviour
                     {
                         PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
                         {
-                            "Ahh... morning already. Let me go to the bathroom and wash my face."
+                            "Ugh, what a strange night... Let me wash my face."
                         });
                     });
                 break;
 
-            // --- GUN 2 AKISI ---
             case StoryState.Day2_Mirror:
                 currentState = StoryState.Day2_Door;
                 PlaySound(doorKnockClip);
@@ -307,7 +255,7 @@ public class GameFlowManager : MonoBehaviour
                 currentState = StoryState.Day2_Bed;
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
                 {
-                    "Fame and fans... I can't wait for tomorrow. Time to sleep."
+                    "Fame and fans... Time to sleep."
                 });
                 break;
 
@@ -323,18 +271,17 @@ public class GameFlowManager : MonoBehaviour
                     {
                         PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
                         {
-                            "Another bright day! Let's admire myself in the mirror."
+                            "Ah, another morning. Let's look at the mirror."
                         });
                     });
                 break;
 
-            // --- GUN 3 AKISI ---
             case StoryState.Day3_MirrorMorning:
                 currentState = StoryState.Day3_Phone;
                 PlaySound(phoneNotifyClip);
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
                 {
-                    "*BZZT! BZZT!* My phone is blowing up with notifications in the bedroom!"
+                    "*BZZT! BZZT!* My phone is blowing up!"
                 });
                 break;
 
@@ -344,8 +291,8 @@ public class GameFlowManager : MonoBehaviour
                 PlaySound(cameraFlashNoiseClip);
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
                 {
-                    "[shake]*CLICK! FLASH! SHUTTER!*[/shake]\nWhat's that noise outside the window?!",
-                    "[tremble]There are cameras at my window! I need to hide in the bathroom![/tremble]"
+                    "[shake]*CLICK! FLASH!*[/shake]\nWhat's that noise outside?!",
+                    "[tremble]Cameras at my window! I need to run to the bathroom![/tremble]"
                 });
                 break;
 
@@ -355,7 +302,7 @@ public class GameFlowManager : MonoBehaviour
                 PlaySound(doorKnockClip);
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
                 {
-                    "[shake]*KNOCK KNOCK KNOCK*[/shake]\nHe is at the door again..."
+                    "[shake]*KNOCK KNOCK KNOCK*[/shake]\nHe is at the door..."
                 });
                 break;
 
@@ -363,7 +310,7 @@ public class GameFlowManager : MonoBehaviour
                 currentState = StoryState.Day3_Bed;
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
                 {
-                    "I finally said NO... I just want to sleep and end this nightmare."
+                    "I finally said NO... I just want to sleep."
                 });
                 break;
 
@@ -372,6 +319,7 @@ public class GameFlowManager : MonoBehaviour
                     onMidSleep: () =>
                     {
                         currentState = StoryState.Day4_Phone;
+                        // 3. gunun sonunda hayir deyince 4. gune normale donuyor (mirrorState: 2 -> normal mutlu sprite)
                         ApplyVisuals(isPretty: false, mirrorState: 2, stalkerWindow: false);
                         if (CameraController.Instance != null) CameraController.Instance.GoToRoom(1);
                     },
@@ -379,17 +327,16 @@ public class GameFlowManager : MonoBehaviour
                     {
                         PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
                         {
-                            "Huh... It's so quiet today. Let me check my phone."
+                            "It's so quiet today..."
                         });
                     });
                 break;
 
-            // --- GUN 4 AKISI ---
             case StoryState.Day4_Phone:
                 currentState = StoryState.Day4_MirrorHappy;
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
                 {
-                    "Wait... let me look in the bathroom mirror!"
+                    "Let me check the bathroom mirror quickly!"
                 });
                 break;
 
