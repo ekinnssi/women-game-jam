@@ -27,6 +27,9 @@ public class PanelManager : MonoBehaviour
 {
     public static PanelManager Instance;
 
+    // HIZLI TIKLAMA KORUMASI: Diyalog veya uyku bittigi an kaydedilir
+    public static float lastPanelCloseTime = 0f;
+
     public enum PanelType { None, Mirror, Door, Phone, Bed }
     public enum TextEffect { None, Wave, Shake, Tremble, Bounce }
     public enum ChoiceMode { None, YesOnly_QuestionLocked, NoOnly_YesLocked }
@@ -41,7 +44,7 @@ public class PanelManager : MonoBehaviour
     [SerializeField] private GameObject dialogueBox;
     [SerializeField] private TMP_Text dialogueText;
     [SerializeField] private TMP_Text continueHintText;
-    [SerializeField] private string hintMessage = "Press Space / Click to continue";
+    [SerializeField] private string hintMessage = "Press SPACE to continue";
 
     [Header("Daktilo Ayari")]
     [SerializeField] private float typingSpeed = 0.035f;
@@ -113,7 +116,6 @@ public class PanelManager : MonoBehaviour
         }
     }
 
-    // Secim butonlarini otomatik olusturur
     private void InitChoiceUI()
     {
         if (dialogueBox == null) return;
@@ -369,6 +371,8 @@ public class PanelManager : MonoBehaviour
         currentChoiceMode = ChoiceMode.None;
         if (choiceContainer != null) choiceContainer.SetActive(false);
 
+        openedTime = Time.unscaledTime;
+
         if (!string.IsNullOrEmpty(postChoiceReply))
         {
             dialogueSteps.Add(new DialogueStep { text = postChoiceReply });
@@ -392,6 +396,9 @@ public class PanelManager : MonoBehaviour
         charEffects.Clear();
         HideAllPanels();
 
+        // Diyalog kapandigi an zamani kaydet (tıklama korumasi)
+        lastPanelCloseTime = Time.unscaledTime;
+
         var cb = onCompleteCallback;
         onCompleteCallback = null;
         cb?.Invoke();
@@ -405,7 +412,7 @@ public class PanelManager : MonoBehaviour
     private IEnumerator SleepRoutine(Action onMidSleep, Action onWakeUp)
     {
         HideAllPanels();
-        isPanelOpen = true;
+        isPanelOpen = true; // Uykudayken tiklamalari kilitle
         if (sleepCanvas != null) sleepCanvas.SetActive(true);
 
         yield return new WaitForSecondsRealtime(1.2f);
@@ -415,6 +422,10 @@ public class PanelManager : MonoBehaviour
         if (sleepCanvas != null) sleepCanvas.SetActive(false);
         isPanelOpen = false;
         Time.timeScale = 1f;
+
+        // Uyanma aninda zamani kaydet (tıklama korumasi)
+        lastPanelCloseTime = Time.unscaledTime;
+
         onWakeUp?.Invoke();
     }
 
@@ -430,15 +441,15 @@ public class PanelManager : MonoBehaviour
             continueHintText.color = c;
         }
 
-        if (!waitingForChoice && Time.unscaledTime - openedTime > 0.2f)
+        if (!waitingForChoice && Time.unscaledTime - openedTime > 0.3f)
         {
             bool advancePressed = false;
             if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
                 advancePressed = true;
             else if (Keyboard.current != null && (Keyboard.current.spaceKey.wasPressedThisFrame ||
-                                                 Keyboard.current.eKey.wasPressedThisFrame ||
-                                                 Keyboard.current.enterKey.wasPressedThisFrame ||
-                                                 Keyboard.current.numpadEnterKey.wasPressedThisFrame))
+                                                  Keyboard.current.eKey.wasPressedThisFrame ||
+                                                  Keyboard.current.enterKey.wasPressedThisFrame ||
+                                                  Keyboard.current.numpadEnterKey.wasPressedThisFrame))
                 advancePressed = true;
 
             if (advancePressed) HandleAdvanceInput();

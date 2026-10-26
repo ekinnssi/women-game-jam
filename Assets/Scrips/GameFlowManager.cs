@@ -46,7 +46,10 @@ public class GameFlowManager : MonoBehaviour
     [Header("Bitis Sahnesi Adi")]
     [SerializeField] private string endSceneName = "EndScene";
 
-    private void Awake() { Instance = this; }
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     private void Start()
     {
@@ -75,40 +78,58 @@ public class GameFlowManager : MonoBehaviour
             else if (mirrorState == 2 && mirrorNormalHappySprite != null) mirrorCharacterImage.sprite = mirrorNormalHappySprite;
         }
 
-        if (windowRenderer != null)
+        if (windowRenderer != null && normalWindowSprite != null)
             windowRenderer.sprite = stalkerWindow ? stalkerWindowSprite : normalWindowSprite;
+
         if (stalkerWindowObject != null)
             stalkerWindowObject.SetActive(stalkerWindow);
     }
 
     private void PlaySound(AudioClip clip)
     {
-        if (audioSource != null && clip != null) audioSource.PlayOneShot(clip);
+        if (audioSource != null && clip != null)
+            audioSource.PlayOneShot(clip);
     }
+
+    public void InteractDoor() { StartCurrentStateInteraction(PanelManager.PanelType.Door); }
+    public void InteractBed() { StartCurrentStateInteraction(PanelManager.PanelType.Bed); }
+    public void InteractMirror() { StartCurrentStateInteraction(PanelManager.PanelType.Mirror); }
+    public void InteractPhone() { StartCurrentStateInteraction(PanelManager.PanelType.Phone); }
 
     public bool CanInteract(PanelManager.PanelType type)
     {
-        switch (type)
+        switch (currentState)
         {
-            case PanelManager.PanelType.Mirror:
-                return currentState == StoryState.Day1_Mirror || currentState == StoryState.Day2_Mirror ||
-                       currentState == StoryState.Day3_MirrorMorning || currentState == StoryState.Day3_MirrorPanic ||
-                       currentState == StoryState.Day4_MirrorHappy;
-            case PanelManager.PanelType.Door:
-                return currentState == StoryState.Day1_Door || currentState == StoryState.Day2_Door ||
-                       currentState == StoryState.Day3_Door;
-            case PanelManager.PanelType.Phone:
-                return currentState == StoryState.Day3_Phone || currentState == StoryState.Day4_Phone;
-            case PanelManager.PanelType.Bed:
-                return currentState == StoryState.Day1_Bed || currentState == StoryState.Day2_Bed ||
-                       currentState == StoryState.Day3_Bed;
-            default: return false;
+            case StoryState.Day1_Mirror:
+            case StoryState.Day2_Mirror:
+            case StoryState.Day3_MirrorMorning:
+            case StoryState.Day3_MirrorPanic:
+            case StoryState.Day4_MirrorHappy:
+                return type == PanelManager.PanelType.Mirror;
+
+            case StoryState.Day1_Door:
+            case StoryState.Day2_Door:
+            case StoryState.Day3_Door:
+                return type == PanelManager.PanelType.Door;
+
+            case StoryState.Day3_Phone:
+            case StoryState.Day4_Phone:
+                return type == PanelManager.PanelType.Phone;
+
+            case StoryState.Day1_Bed:
+            case StoryState.Day2_Bed:
+            case StoryState.Day3_Bed:
+                return type == PanelManager.PanelType.Bed;
+
+            default:
+                return false;
         }
     }
 
     public void StartCurrentStateInteraction(PanelManager.PanelType type)
     {
         if (PanelManager.Instance == null) return;
+        if (!CanInteract(type)) return;
 
         switch (currentState)
         {
@@ -128,7 +149,9 @@ public class GameFlowManager : MonoBehaviour
                 }, AdvanceStory, PanelManager.ChoiceMode.YesOnly_QuestionLocked, "Hehehe... Just wait and see tomorrow.");
                 break;
 
-            case StoryState.Day1_Bed: AdvanceStory(); break;
+            case StoryState.Day1_Bed:
+                AdvanceStory();
+                break;
 
             case StoryState.Day2_Mirror:
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.Mirror, new string[]
@@ -146,7 +169,9 @@ public class GameFlowManager : MonoBehaviour
                 }, AdvanceStory, PanelManager.ChoiceMode.YesOnly_QuestionLocked, "Wonderful... Everyone will know your name.");
                 break;
 
-            case StoryState.Day2_Bed: AdvanceStory(); break;
+            case StoryState.Day2_Bed:
+                AdvanceStory();
+                break;
 
             case StoryState.Day3_MirrorMorning:
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.Mirror, new string[]
@@ -180,7 +205,9 @@ public class GameFlowManager : MonoBehaviour
                 }, AdvanceStory, PanelManager.ChoiceMode.NoOnly_YesLocked, "...Fine. Suit yourself.");
                 break;
 
-            case StoryState.Day3_Bed: AdvanceStory(); break;
+            case StoryState.Day3_Bed:
+                AdvanceStory();
+                break;
 
             case StoryState.Day4_Phone:
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
@@ -224,7 +251,6 @@ public class GameFlowManager : MonoBehaviour
                 });
                 break;
 
-            // 1. UYKU: Uyanınca (onWakeUp) Güzel Oluyoruz
             case StoryState.Day1_Bed:
                 PanelManager.Instance.ShowSleepScreen(
                     onMidSleep: () =>
@@ -259,7 +285,6 @@ public class GameFlowManager : MonoBehaviour
                 });
                 break;
 
-            // 2. UYKU: Uyanınca Güzel kalmaya devam ediyoruz
             case StoryState.Day2_Bed:
                 PanelManager.Instance.ShowSleepScreen(
                     onMidSleep: () =>
@@ -291,16 +316,17 @@ public class GameFlowManager : MonoBehaviour
                 ApplyVisuals(isPretty: true, mirrorState: 1, stalkerWindow: false);
                 PlaySound(cameraFlashNoiseClip);
 
-                // Panik krizini tam bu anda başlatıyoruz
-                if (PencereKriziManager.Instance != null)
-                {
-                    PencereKriziManager.Instance.KriziBaslat();
-                }
-
+                // Diyalog tamamen kapandıktan SONRA pencere krizi başlar
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
                 {
-        "[shake]*CLICK! FLASH!*[/shake]\nWhat's that noise outside?!",
-        "[tremble]Cameras at my window! I need to run to the bathroom![/tremble]"
+                    "[shake]*CLICK! FLASH!*[/shake]\nWhat's that noise outside?!",
+                    "[tremble]Cameras at my window! I need to run to the bathroom![/tremble]"
+                }, () =>
+                {
+                    if (PencereKriziManager.Instance != null)
+                    {
+                        PencereKriziManager.Instance.KriziBaslat();
+                    }
                 });
                 break;
 
@@ -322,7 +348,6 @@ public class GameFlowManager : MonoBehaviour
                 });
                 break;
 
-            // 3. UYKU (Hayır dedikten sonra): Uyanınca (onWakeUp) Normal/Mutlu Hale Dönüyoruz
             case StoryState.Day3_Bed:
                 PanelManager.Instance.ShowSleepScreen(
                     onMidSleep: () =>

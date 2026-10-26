@@ -1,21 +1,17 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class TaskInteraction : MonoBehaviour
 {
-    private bool isTaskDone = false; // Görevin tekrar yapýlmasýný engeller
-
     private void OnMouseDown()
     {
-        if (!isTaskDone)
-        {
-            if (GameFlowManager.Instance != null)
-            {
-                // Göreve týklandýðýnda hikayeyi bir sonraki aþamaya geçir
-                GameFlowManager.Instance.AdvanceStory();
-            }
+        // Fare bir UI butonunun (YES vb.) üzerindeyse veya diyalog paneli açýksa týklamayý engelle
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
+        if (PanelManager.Instance != null && PanelManager.Instance.IsPanelOpen) return;
 
-            isTaskDone = true;
-            Debug.Log(gameObject.name + " görevi tamamlandý!");
+        if (GameFlowManager.Instance != null)
+        {
+            GameFlowManager.Instance.InteractDoor();
         }
     }
 }

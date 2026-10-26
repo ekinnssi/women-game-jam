@@ -13,18 +13,22 @@ public class PencereKriziManager : MonoBehaviour
     public Sprite sapikCamTelefonlar;
 
     public float krizSuresi = 15f;
-    public float camEkrandaKalmaSuresi = 1f;
-    public float yeniCamAcilmaHizi = 0.5f;
+    public float yeniCamAcilmaHizi = 0.3f; // Yeni hız ayarı
+
+    [Header("Ambiyans Ses / Pitch Ayarları")]
+    [SerializeField] private AudioSource ambiyansAudioSource;
+    [SerializeField] private float minPitch = 0.95f;
+    [SerializeField] private float maxPitch = 1.05f;
+    [SerializeField] private float pitchDegisimHizi = 2f;
 
     private bool krizAktif = false;
-    // Sadece sonradan eklenen pencereleri tutacak otomatik liste
+    private float varsayilanPitch = 1f;
     private List<SpriteRenderer> ekstraPencereler = new List<SpriteRenderer>();
 
     void Awake()
     {
         Instance = this;
 
-        // Oyun başlarken tiki kapalı olan pencereleri bul ve ekstra listesine kaydet
         foreach (var p in butunPencereler)
         {
             if (!p.gameObject.activeSelf)
@@ -40,25 +44,52 @@ public class PencereKriziManager : MonoBehaviour
         foreach (var p in butunPencereler)
         {
             p.sprite = normalCam;
-            p.gameObject.SetActive(true); // Kriz anında hepsini aç
+            p.gameObject.SetActive(true);
+        }
+
+        if (ambiyansAudioSource != null)
+        {
+            varsayilanPitch = ambiyansAudioSource.pitch;
+            ambiyansAudioSource.Play();
+            StartCoroutine(PitchDalgalanmaDongusu());
         }
 
         StartCoroutine(KrizZamanlayici());
         StartCoroutine(CamAcmaDongusu());
     }
 
+    IEnumerator PitchDalgalanmaDongusu()
+    {
+        while (krizAktif && ambiyansAudioSource != null)
+        {
+            float t = Mathf.PingPong(Time.time * pitchDegisimHizi, 1f);
+            ambiyansAudioSource.pitch = Mathf.Lerp(minPitch, maxPitch, t);
+            yield return null;
+        }
+
+        if (ambiyansAudioSource != null)
+        {
+            ambiyansAudioSource.pitch = varsayilanPitch;
+            ambiyansAudioSource.Stop();
+        }
+    }
+
     IEnumerator KrizZamanlayici()
     {
         yield return new WaitForSeconds(krizSuresi);
-        krizAktif = false; // Süre doldu, yeni saldırıları durdur
+        krizAktif = false; // Süre bitti, yeni saldırılar durdu
 
-        // Önce ekrandaki tüm pencereleri anında normal cama çevir
+        // Süre bittiğinde ekranda hala açılmış (sapık/telefon belirsizliği olan) 
+        // pencereler varsa, onları aniden kesmek yerine hızlıca ve doğallıkla normal cama çeviriyoruz
         foreach (var p in butunPencereler)
         {
-            p.sprite = normalCam;
+            if (p.sprite != normalCam)
+            {
+                p.sprite = normalCam;
+            }
         }
 
-        // Ekstra pencereleri kopyala ve rastgele sırayla teker teker gizle
+        // Ekstra (aktif olmayan) pencereleri sırayla gizleme efekti
         List<SpriteRenderer> silinecekPencereler = new List<SpriteRenderer>(ekstraPencereler);
 
         while (silinecekPencereler.Count > 0)
@@ -67,11 +98,10 @@ public class PencereKriziManager : MonoBehaviour
             silinecekPencereler[rastgeleIndex].gameObject.SetActive(false);
             silinecekPencereler.RemoveAt(rastgeleIndex);
 
-            // Diğer pencerenin kaybolması için 0.1 ile 0.3 saniye arası rastgele bekle
-            yield return new WaitForSeconds(Random.Range(0.1f, 0.4f));
+            yield return new WaitForSeconds(Random.Range(0.08f, 0.2f));
         }
 
-        // Tüm pencereler tamamen temizlendikten sonra diyalogu ekrana getir
+        // Tüm süreç tamamlanınca diyalog devreye girer
         if (PanelManager.Instance != null)
         {
             PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
@@ -90,34 +120,27 @@ public class PencereKriziManager : MonoBehaviour
 
             if (secilenCam.sprite == normalCam)
             {
-                StartCoroutine(CamSaldirisi(secilenCam));
+                CamSaldirisi(secilenCam);
             }
             yield return new WaitForSeconds(yeniCamAcilmaHizi);
         }
     }
 
-    IEnumerator CamSaldirisi(SpriteRenderer cam)
+    void CamSaldirisi(SpriteRenderer cam)
     {
         Sprite secilenSaldiri = (Random.value > 0.5f) ? sapikCamInsanlar : sapikCamTelefonlar;
         cam.sprite = secilenSaldiri;
 
-        float zaman = 0;
-
-        while (zaman < camEkrandaKalmaSuresi && cam.sprite != normalCam && krizAktif)
+        if (ScreenFlash.Instance != null)
         {
-            zaman += Time.deltaTime;
-            yield return null;
-        }
-
-        if (krizAktif)
-        {
-            cam.sprite = normalCam;
+            ScreenFlash.Instance.TriggerFlash(0.9f, 0.3f);
         }
     }
 
     public void PencereyeTiklandi(SpriteRenderer tiklanan)
     {
-        if (krizAktif && tiklanan.sprite != normalCam)
+        // Oyuncu kriz anında veya son kapanış evresinde tıkladıkça pencereler teker teker kapanır
+        if (tiklanan.sprite != normalCam)
         {
             tiklanan.sprite = normalCam;
         }
