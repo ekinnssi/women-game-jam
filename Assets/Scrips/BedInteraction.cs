@@ -2,14 +2,13 @@ using UnityEngine;
 
 public class BedInteraction : MonoBehaviour
 {
-    public DayManager dayManager;
-
     // Fare ile yataðýn üzerindeki Box Collider alanýna týklandýðýnda çalýþýr
     private void OnMouseDown()
     {
-        if (dayManager != null)
+        if (GameFlowManager.Instance != null)
         {
-            dayManager.SleepAndProgressDay();
+            // Eski uyku sistemi yerine yeni hikaye akýþýný tetikle
+            GameFlowManager.Instance.AdvanceStory();
         }
     }
 }

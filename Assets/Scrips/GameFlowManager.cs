@@ -288,12 +288,19 @@ public class GameFlowManager : MonoBehaviour
 
             case StoryState.Day3_Phone:
                 currentState = StoryState.Day3_MirrorPanic;
-                ApplyVisuals(isPretty: true, mirrorState: 1, stalkerWindow: true);
+                ApplyVisuals(isPretty: true, mirrorState: 1, stalkerWindow: false);
                 PlaySound(cameraFlashNoiseClip);
+
+                // Panik krizini tam bu anda başlatıyoruz
+                if (PencereKriziManager.Instance != null)
+                {
+                    PencereKriziManager.Instance.KriziBaslat();
+                }
+
                 PanelManager.Instance.OpenInspect(PanelManager.PanelType.None, new string[]
                 {
-                    "[shake]*CLICK! FLASH!*[/shake]\nWhat's that noise outside?!",
-                    "[tremble]Cameras at my window! I need to run to the bathroom![/tremble]"
+        "[shake]*CLICK! FLASH!*[/shake]\nWhat's that noise outside?!",
+        "[tremble]Cameras at my window! I need to run to the bathroom![/tremble]"
                 });
                 break;
 
